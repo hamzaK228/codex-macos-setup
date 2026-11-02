@@ -1,0 +1,5 @@
+interface:
+  display_name: "FreeLLMAPI"
+  short_description: "Inspect and call the local FreeLLMAPI router"
+policy:
+  allow_implicit_invocation: true

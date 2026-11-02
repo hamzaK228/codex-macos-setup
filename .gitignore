@@ -1,0 +1,14 @@
+.DS_Store
+**/__pycache__/
+**/*.pyc
+**/node_modules/
+**/dist/
+**/.env
+**/.env.*
+**/.data/
+**/allure-results/
+**/test-results/
+*.log
+*.tar.gz
+
+.snapshot-*/

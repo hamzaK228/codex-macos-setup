@@ -1,0 +1,45 @@
+{
+  "note": "Install through Codex with your own account. No connections or credentials are included.",
+  "configuredPlugins": [
+    {
+      "id": "codex-app-tools@openai-bundled",
+      "enabled": true
+    },
+    {
+      "id": "visualize@openai-bundled",
+      "enabled": true
+    },
+    {
+      "id": "documents@openai-primary-runtime",
+      "enabled": true
+    },
+    {
+      "id": "pdf@openai-primary-runtime",
+      "enabled": true
+    },
+    {
+      "id": "spreadsheets@openai-primary-runtime",
+      "enabled": true
+    },
+    {
+      "id": "presentations@openai-primary-runtime",
+      "enabled": true
+    },
+    {
+      "id": "template-creator@openai-primary-runtime",
+      "enabled": true
+    },
+    {
+      "id": "browser@openai-bundled",
+      "enabled": true
+    },
+    {
+      "id": "unified-computer-use@openai-bundled",
+      "enabled": true
+    },
+    {
+      "id": "code-review@openai-bundled",
+      "enabled": true
+    }
+  ]
+}

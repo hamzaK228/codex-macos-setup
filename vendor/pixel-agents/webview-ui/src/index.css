@@ -1,0 +1,571 @@
+@import 'tailwindcss';
+/* Material Symbols Sharp, weight 700 (the single-weight package keeps the
+   FILL/GRAD/opsz axes variable). Imported into the base layer: the package's
+   own rules are unlayered and would otherwise outrank every Tailwind utility
+   (its font-size: 24px silently beat text-[...] sizing). */
+@import '@material-symbols/font-700/sharp.css' layer(base);
+
+@font-face {
+  font-family: 'FS Pixel Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/FSPixelSansUnicode-Regular.ttf') format('truetype');
+}
+
+:root {
+  /* Core palette */
+  --color-bg: #1e1e2e;
+  --color-bg-dark: #181828;
+  --color-bg-thumb: #2a2a3a;
+  --color-border: #4a4a6a;
+  --color-accent: #6030ff;
+  --color-accent-bright: #746fff;
+
+  /* Text */
+  --color-text: rgba(255, 255, 255, 0.9);
+  --color-text-muted: rgba(255, 255, 255, 0.5);
+
+  /* Buttons */
+  --color-btn-bg: rgb(53, 52, 69);
+  --color-btn-hover: rgb(78, 75, 104);
+  --color-active-bg: rgb(44, 43, 109);
+
+  /* Semantic */
+  --color-reset-text: #ecc;
+  --color-danger: #d14249;
+  --color-warning: #ff8d14;
+
+  /* Status */
+  --color-status-permission: #cca700;
+  --color-status-active: #3794ff;
+  --color-status-success: #89d185;
+  --color-status-error: var(--color-danger);
+
+  /* Shadow */
+  --shadow-pixel: 2px 2px 0px #0a0a14;
+
+  /* Non-utility values */
+  --vignette: radial-gradient(ellipse at center, transparent 50%, rgba(0, 0, 0, 0.6) 100%);
+  --btn-disabled-opacity: 0.35;
+}
+
+@theme inline {
+  /* 1px base so Tailwind spacing maps directly to pixels (pixel-art project) */
+  --spacing: 1px;
+
+  --font-pixel: 'FS Pixel Sans', sans-serif;
+
+  /* Text sizes (pixel-art scale, base = 22px) */
+  --text-*: initial;
+  --text-2xs: 16px;
+  --text-xs: 18px;
+  --text-sm: 20px;
+  --text-base: 22px;
+  --text-lg: 26px;
+  --text-xl: 30px;
+  --text-2xl: 36px;
+  --text-3xl: 44px;
+  --text-4xl: 52px;
+  --text-5xl: 64px;
+
+  /* Colors — reference :root vars so VS Code shows swatches */
+  --color-bg: var(--color-bg);
+  --color-bg-dark: var(--color-bg-dark);
+  --color-bg-thumb: var(--color-bg-thumb);
+  --color-border: var(--color-border);
+  --color-accent: var(--color-accent);
+  --color-text: var(--color-text);
+  --color-text-muted: var(--color-text-muted);
+  --color-btn-bg: var(--color-btn-bg);
+  --color-btn-hover: var(--color-btn-hover);
+  --color-active-bg: var(--color-active-bg);
+  --color-accent-bright: var(--color-accent-bright);
+  --color-reset-text: var(--color-reset-text);
+  --color-danger: var(--color-danger);
+  --color-warning: var(--color-warning);
+  --color-status-permission: var(--color-status-permission);
+  --color-status-active: var(--color-status-active);
+  --color-status-success: var(--color-status-success);
+  --color-status-error: var(--color-status-error);
+
+  /* Shadow */
+  --shadow-pixel: var(--shadow-pixel);
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    @apply m-0 w-full h-full overflow-hidden font-pixel text-base text-text;
+    /* Mobile Safari: 100% tracks the shifting URL-bar viewport; dvh follows
+       the *dynamic* viewport so the card bar hugs the real bottom edge. */
+    height: 100dvh;
+    /* No rubber-banding — the app owns all scrolling (canvas pan, xterm,
+       card bar). */
+    overscroll-behavior: none;
+    /* Whatever peeks out during keyboard show/hide or overscroll must be
+       office-dark, never browser-white. */
+    background: var(--color-bg-dark);
+  }
+
+  * {
+    @apply font-pixel;
+  }
+}
+
+@layer components {
+  /* Panel with standard pixel-art border + shadow */
+  .pixel-panel {
+    @apply bg-bg border-2 border-border rounded-none shadow-pixel;
+  }
+
+  /* Horizontal carousel for editor items */
+  .carousel {
+    @apply flex gap-8 overflow-x-auto flex-nowrap pb-2;
+  }
+
+  /* Pixel-art range slider (HSBC ColorPicker). The accent fill up to the thumb
+     is driven by the --range-fill custom property set inline per slider. */
+  .pixel-range {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 16px;
+    cursor: pointer;
+    border: 2px solid var(--color-border);
+    background: linear-gradient(
+      to right,
+      var(--color-accent) var(--range-fill, 50%),
+      var(--color-bg-dark) var(--range-fill, 50%)
+    );
+  }
+  .pixel-range::-webkit-slider-runnable-track {
+    -webkit-appearance: none;
+    height: 12px;
+    background: transparent;
+  }
+  .pixel-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 10px;
+    height: 18px;
+    margin-top: -5px;
+    background: var(--color-text);
+    border: 2px solid var(--color-border);
+    border-radius: 0;
+    box-shadow: var(--shadow-pixel);
+  }
+  .pixel-range:hover::-webkit-slider-thumb {
+    background: var(--color-accent-bright);
+  }
+  .pixel-range::-moz-range-track {
+    height: 12px;
+    background: transparent;
+  }
+  .pixel-range::-moz-range-thumb {
+    width: 10px;
+    height: 18px;
+    background: var(--color-text);
+    border: 2px solid var(--color-border);
+    border-radius: 0;
+    box-shadow: var(--shadow-pixel);
+  }
+  .pixel-range:hover::-moz-range-thumb {
+    background: var(--color-accent-bright);
+  }
+
+  /* Terminal content must be monospace: Claude Code is a full-screen TUI, and a
+     proportional face breaks its column alignment. The base layer's
+     `* { font-pixel }` applies FS Pixel Sans to every element -- including the
+     span xterm renders each cell into -- which overrides what xterm sets on its
+     own container. Re-assert the mono stack here (components layer beats base,
+     and `.xterm *` outranks `*`).
+
+     --font-terminal is set inline by TerminalPane from TERMINAL_FONT_FAMILY, so
+     the font CSS paints with is the same one xterm measured its cell grid with;
+     hard-coding a second stack here would misalign the grid the moment the two
+     drifted. Only the terminal CONTENT is mono -- the drawer chrome around it
+     stays on the pixel font. */
+  .xterm,
+  .xterm * {
+    font-family: var(--font-terminal);
+    /* iOS: no long-press callout/loupe anywhere in the terminal — a touch
+       claimed for text interaction is cancelled mid-scroll. Touch handling
+       is fully synthesized in TerminalPane. */
+    -webkit-touch-callout: none;
+  }
+
+  /* xterm's viewport owns the terminal's native scrollbar. Same pixel
+     treatment as .pixel-scrollbar below, but with a transparent track: when
+     nothing overflows (a full-screen TUI like Claude Code) no strip paints at
+     all, and with scrollback only the slim square thumb shows. */
+  .xterm .xterm-viewport::-webkit-scrollbar {
+    width: 6px;
+  }
+  .xterm .xterm-viewport::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .xterm .xterm-viewport::-webkit-scrollbar-thumb {
+    background: var(--color-bg-thumb);
+    border-radius: 0;
+  }
+  .xterm .xterm-viewport::-webkit-scrollbar-thumb:hover {
+    background: var(--color-accent);
+  }
+  /* Firefox fallback */
+  .xterm .xterm-viewport {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-bg-thumb) transparent;
+  }
+
+  /* Touch text selection chrome over a terminal pane. selectionOverlay.ts
+     creates and positions these, and sets --cell-h, --sel-handle-w and
+     --sel-knob on each handle from constants.ts, so the geometry it computes
+     and the shapes drawn here can't drift. */
+  /* The pill is a row of buttons: Copy (verbatim) and Copy as text. */
+  .terminal-copy-pill {
+    position: absolute;
+    z-index: 10;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .terminal-copy-pill button {
+    padding: 8px 14px;
+    font-size: 17px;
+    background: var(--color-btn-bg);
+    color: var(--color-text);
+    border: 2px solid var(--color-border);
+    border-radius: 0;
+    box-shadow: var(--shadow-pixel);
+  }
+  /* The wrapper is the touch strip centered on the selection edge (the only
+     thing that hit-tests); the bar (::before, one cell tall) and the square
+     knob (::after) are drawn inside it — knob above the start bar, below the
+     end bar. */
+  .terminal-sel-handle {
+    position: absolute;
+    z-index: 10;
+    width: var(--sel-handle-w);
+    height: calc(var(--cell-h) + var(--sel-knob));
+  }
+  .terminal-sel-handle::before,
+  .terminal-sel-handle::after {
+    content: '';
+    position: absolute;
+    background: var(--color-accent-bright);
+    pointer-events: none;
+  }
+  .terminal-sel-handle::before {
+    left: calc((var(--sel-handle-w) - 2px) / 2);
+    width: 2px;
+    height: var(--cell-h);
+  }
+  .terminal-sel-handle::after {
+    left: calc((var(--sel-handle-w) - var(--sel-knob)) / 2);
+    width: var(--sel-knob);
+    height: var(--sel-knob);
+  }
+  .terminal-sel-handle[data-handle='start']::before {
+    top: var(--sel-knob);
+  }
+  .terminal-sel-handle[data-handle='start']::after {
+    top: 0;
+  }
+  .terminal-sel-handle[data-handle='end']::before {
+    top: 0;
+  }
+  .terminal-sel-handle[data-handle='end']::after {
+    top: var(--cell-h);
+  }
+
+  /* Pulsing dot animation (DebugView, ToolOverlay) */
+  .pixel-pulse {
+    animation: pixel-pulse 1.5s ease-in-out infinite;
+  }
+
+  /* Top-anchored floating chrome (Settings, view toggle, connection pill):
+     in a Home-Screen PWA with viewport-fit=cover the page starts under the
+     iOS status bar, so the usual 8px top offset lands beneath the clock.
+     env() is 0 in browser tabs and on desktop, where this equals top-8. */
+  .mobile-safe-top {
+    top: calc(env(safe-area-inset-top, 0px) + 8px);
+  }
+
+  /* Same, for the mobile terminal pane wrappers (4px base, matches inset-4). */
+  .mobile-safe-pane-top {
+    top: calc(env(safe-area-inset-top, 0px) + 4px);
+  }
+
+  /* Scroll containers whose overflow is obvious from clipped content (the
+     mobile card bar) — a scrollbar strip would just eat row height. */
+  .no-scrollbar {
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Pixel-style thin scrollbar utility — used by the Area card folder list
+     where the mapped-folder count can exceed the card height. */
+  .pixel-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .pixel-scrollbar::-webkit-scrollbar-track {
+    background: var(--color-bg-dark);
+  }
+  .pixel-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 0;
+  }
+  .pixel-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--color-accent);
+  }
+  /* Firefox fallback */
+  .pixel-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) var(--color-bg-dark);
+  }
+
+  /* Material Symbols defaults for this project: Sharp style (imported in
+     main.tsx at weight 700), FILL 1, GRAD 0, opsz 24. The package CSS pins
+     font-size to 24px; 1em instead, so an icon tracks the text beside it. */
+  .material-symbols-sharp {
+    font-variation-settings:
+      'FILL' 1,
+      'GRAD' 0,
+      'opsz' 24;
+    font-size: 1em;
+    line-height: 1;
+  }
+}
+
+@keyframes pixel-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* Readable controls beside the pixel office. */
+.observer-workspace { background:#29241f; }
+.observer-panel { --observer-ink:#fff4e4; --observer-muted:#d5c7b2; flex:0 0 360px; width:360px; height:100%; z-index:30; color:var(--observer-ink); background:#302b24; border-left:1px solid #6b5b45; font:16px/1.5 system-ui,sans-serif; overflow:auto; scrollbar-width:thin; scrollbar-color:#a48b68 #302b24; color-scheme:dark; }
+.observer-panel *, .observer-character-label * { font-family:system-ui,sans-serif; }
+.observer-panel ::selection { background:#ad8751; color:#fff8e9; }
+.observer-panel-toggle { display:none; }
+.observer-panel-content { padding:26px 22px; }
+.observer-header h1 { margin:0 0 10px; font:700 26px/1.2 system-ui,sans-serif; color:#ffe3ac; }
+.observer-connection { display:flex; align-items:center; gap:8px; margin:0; font-size:14px; }
+.observer-dot { display:inline-block; width:9px; height:9px; background:#b8a98f; border-radius:50%; flex-shrink:0; }
+.observer-connection[data-connected='true'] .observer-dot { background:#b8d591; }
+.observer-guide { margin:16px 0 0; color:var(--observer-muted); font-size:16px; }
+.observer-caption { color:var(--observer-muted); font-size:14px; margin:8px 0; }
+.observer-notice { background:#51402a; color:#ffe0a3; padding:12px; margin-top:16px; }
+.observer-filter { margin:26px 0; }
+.observer-filter label { display:block; font-size:15px; margin-bottom:8px; }
+.observer-filter select { width:100%; background:#24211d; border:1px solid #887356; border-radius:6px; min-height:46px; padding:10px; color:var(--observer-ink); font:inherit; }
+.observer-panel :is(button,select,summary):focus-visible { outline:2px solid #f7d796; outline-offset:3px; }
+.observer-project { margin:0 0 28px; }
+.observer-panel h2 { color:#f0d6aa; margin:0 0 12px; font-size:18px; font-weight:650; overflow-wrap:anywhere; }
+.observer-project h2 { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+.observer-project h2 > span { color:var(--observer-muted); font-size:14px; font-variant-numeric:tabular-nums; }
+.observer-project ul { list-style:none; padding:0; margin:0; }
+.observer-project li + li { margin-top:8px; }
+.observer-agent { display:block; width:100%; border:0; border-radius:6px; background:#3b342b; text-align:left; color:var(--observer-ink); padding:16px 14px; font:inherit; cursor:pointer; overflow-wrap:anywhere; }
+.observer-agent:hover { background:#484030; }
+.observer-agent[aria-pressed='true'] { background:#55452e; box-shadow:inset 0 0 0 1px #d2aa6b; }
+.observer-agent-title { display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+.observer-agent-title strong { font-size:17px; }
+.observer-focus-hint { flex-shrink:0; font-size:14px; color:#f0d6aa; }
+.observer-agent-state { display:flex; align-items:center; gap:8px; margin-top:12px; font-size:16px; font-weight:600; }
+.observer-agent-state[data-status='working'] .observer-dot { background:#b9d49d; }
+.observer-agent-state[data-status='permission'] .observer-dot { background:#f5c66d; }
+.observer-agent-state[data-status='interrupted'] .observer-dot,.observer-agent-state[data-status='disconnected'] .observer-dot { background:#e29a83; }
+.observer-action { display:block; font-size:14px; color:var(--observer-muted); margin-top:4px; }
+.observer-agent-entry { background:#3b342b; border-radius:6px; }
+.observer-work-report { padding:0 14px 16px; overflow-wrap:anywhere; }
+.observer-report-caption { display:flex; flex-wrap:wrap; justify-content:space-between; gap:4px 12px; margin:0 0 10px; padding-top:12px; border-top:1px solid #79644a; color:var(--observer-muted); font-size:13px; }
+.observer-report-caption time { font-variant-numeric:tabular-nums; }
+.observer-work-lines { margin:0; font-size:14px; line-height:1.5; }
+.observer-work-lines > div { display:grid; grid-template-columns:58px minmax(0,1fr); gap:10px; margin-top:6px; }
+.observer-work-lines dt { font-weight:650; color:#f0d6aa; }
+.observer-work-lines dd { margin:0; white-space:pre-wrap; }
+.observer-report-note { margin:10px 0 0; color:var(--observer-muted); font-size:12px; line-height:1.5; }
+.observer-empty { color:var(--observer-muted); font-size:16px; margin:12px 0 20px; }
+.observer-more { border-top:1px solid #79644a; margin-top:28px; padding-top:16px; }
+.observer-more > summary { cursor:pointer; min-height:44px; font-size:17px; font-weight:600; padding:8px 0; }
+.observer-activity { border-top:1px solid #66553e; padding-top:18px; margin-top:22px; }
+.observer-activity ol,.observer-role-list { padding:0; margin:15px 0 0; list-style:none; }
+.observer-activity li { display:flex; gap:12px; margin-top:16px; font-size:14px; overflow-wrap:anywhere; }
+.observer-role-list li { display:block; }
+.observer-role-list p { color:var(--observer-muted); margin:5px 0; }
+.observer-activity time { color:var(--observer-muted); font-size:13px; font-variant-numeric:tabular-nums; padding-top:2px; flex-shrink:0; }
+.observer-technical { border-top:1px solid #66553e; margin-top:24px; padding-top:14px; color:var(--observer-muted); font-size:14px; overflow-wrap:anywhere; }
+.observer-technical summary { cursor:pointer; min-height:44px; padding:8px 0; }
+.observer-technical p { margin:8px 0 14px; }
+.observer-catalog ul { list-style:none; padding:0; margin:12px 0 0; }
+.observer-catalog li { padding:10px 0; }
+.observer-catalog li strong { color:var(--observer-ink); font-size:16px; }
+.observer-catalog li p { margin:4px 0; }
+.observer-labels { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
+.observer-character-label { position:absolute; transform:translate(-50%,-100%); background:#302b24ed; color:#fff4e4; padding:7px 10px; border-radius:4px; text-align:center; width:max-content; max-width:200px; box-shadow:0 3px 7px #17120d66; font:13px/1.4 system-ui,sans-serif; }
+.observer-character-label strong { display:block; font-size:14px; }
+.observer-character-label span { display:block; color:#e0c69e; }
+.observer-character-label[data-focused='true'] { outline:1px solid #f2ce8c; }
+.observer-panel:not([open]) > .observer-panel-toggle { display:flex; align-items:center; gap:10px; padding:16px; cursor:pointer; color:#ffe3ac; font:600 20px/1.3 system-ui,sans-serif; }
+.observer-toggle-hint { margin-left:auto; font:14px/1.3 system-ui,sans-serif; }
+@media (max-width:760px) {
+ .observer-workspace { flex-direction:column; }
+ .observer-workspace > div:first-child { min-height:0; flex:1 1 0%; height:auto; width:100%; }
+ .observer-panel { width:100%; height:auto; max-height:52%; flex:0 0 auto; border-left:0; border-top:1px solid #8b7350; }
+ .observer-panel-toggle { display:flex; align-items:center; gap:10px; padding:14px 18px; cursor:pointer; font:600 20px/1.3 system-ui,sans-serif; color:#ffe3ac; }
+ .observer-panel-content { padding:12px 18px 22px; }
+ .observer-header h1 { display:none; }
+ .observer-guide { margin-top:10px; }
+ .observer-filter { margin:20px 0; }
+ .observer-character-label { max-width:160px; }
+}
+@media (prefers-reduced-motion:reduce) { .observer-workspace *,.observer-workspace *::before,.observer-workspace *::after { scroll-behavior:auto !important; animation:none !important; transition:none !important; } }
+
+/* Project navigation sits over the one shared map; each button frames a real room. */
+.observer-room-nav { position:absolute; z-index:15; top:12px; left:12px; right:12px; color:#fff4e4; font:14px/1.4 system-ui,sans-serif; }
+.observer-room-nav * { font-family:system-ui,sans-serif; }
+.observer-room-switcher { display:flex; gap:7px; overflow-x:auto; padding:3px 3px 9px; scrollbar-width:thin; }
+.observer-room-nav button { min-height:40px; border:1px solid #907654; border-radius:4px; background:#302b24f5; color:#fff0d7; padding:8px 12px; cursor:pointer; font:600 14px/1.4 system-ui,sans-serif; }
+.observer-room-switcher button { flex:0 0 auto; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.observer-room-switcher button > span { display:inline-block; width:8px; height:8px; margin-right:7px; }
+.observer-room-nav button:hover { background:#564630; }
+.observer-room-nav button[aria-pressed='true'] { background:#6d5230; border-color:#f0cc8b; color:#fff6df; }
+.observer-room-nav button:focus-visible { outline:2px solid #ffe2a9; outline-offset:2px; }
+.observer-room-controls { display:flex; align-items:center; justify-content:flex-end; gap:7px; pointer-events:none; }
+.observer-room-controls > span { margin-right:auto; padding:4px 8px; background:#302b24e8; border-radius:3px; color:#dacbb5; font-size:12px; }
+.observer-room-controls button { pointer-events:auto; width:40px; font-size:20px; padding:2px; }
+.observer-room-labels { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+.observer-room-label { position:absolute; transform:translate(-50%,0); background:#302b24ee; color:#fff0d8; border-bottom:2px solid; padding:5px 10px; font:600 14px/1.4 system-ui,sans-serif; white-space:nowrap; text-overflow:ellipsis; overflow:hidden; }
+.observer-pan-hint { position:absolute; left:12px; bottom:12px; margin:0; max-width:calc(100% - 24px); padding:6px 10px; color:#e1d1b9; background:#302b24e8; border-radius:3px; font:12px/1.5 system-ui,sans-serif; pointer-events:none; }
+@media (max-width:760px) {
+ .observer-room-nav { top:8px; left:8px; right:8px; }
+ .observer-room-switcher button { max-width:170px; }
+ .observer-room-controls > span { font-size:11px; }
+ .observer-pan-hint { display:none; }
+}
+
+/* Readable agent details stay attached to the office, independent of camera focus. */
+.observer-panel { flex-basis:380px; width:380px; }
+.observer-history { border-top:1px solid #79644a; margin:8px 0 26px; padding-top:14px; }
+.observer-history > summary { cursor:pointer; display:flex; justify-content:space-between; align-items:center; min-height:44px; color:#f0d6aa; font-weight:650; }
+.observer-history > summary::before { content:'▸'; margin-right:8px; }
+.observer-history[open] > summary::before { content:'▾'; }
+.observer-history > summary > span { margin-left:auto; font-variant-numeric:tabular-nums; color:#d5c7b2; }
+.observer-history .observer-project { margin-top:12px; }
+.observer-inspector { position:absolute; z-index:45; top:108px; right:400px; width:min(450px,calc(100% - 420px)); max-height:calc(100% - 132px); overflow:auto; background:#342c23; color:#fff4e4; border:1px solid #c49b63; border-radius:10px; box-shadow:0 12px 40px #17120d80; padding:22px; font:16px/1.55 system-ui,sans-serif; scrollbar-width:thin; }
+.observer-inspector * { font-family:system-ui,sans-serif; }
+.observer-inspector header { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:20px; }
+.observer-inspector-eyebrow { margin:0 0 4px; color:#d8c6aa; font-size:14px; }
+.observer-inspector h2 { margin:0; color:#ffe3ac; font-size:24px; line-height:1.3; overflow-wrap:anywhere; }
+.observer-inspector header button { display:grid; place-items:center; flex:0 0 44px; width:44px; height:44px; background:#51402d; border:1px solid #a28760; border-radius:6px; color:#fff4e4; font:28px/1 system-ui,sans-serif; cursor:pointer; }
+.observer-inspector button:hover { background:#695035; }
+.observer-inspector button:focus-visible { outline:2px solid #ffe3ac; outline-offset:3px; }
+.observer-inspector-meta { margin:0 0 22px; }
+.observer-inspector-meta > div { display:grid; grid-template-columns:78px minmax(0,1fr); gap:12px; margin:8px 0; }
+.observer-inspector-meta dt { color:#d8c6aa; }
+.observer-inspector-meta dd { margin:0; overflow-wrap:anywhere; }
+.observer-inspector .observer-work-report { padding:0; }
+.observer-inspector .observer-report-caption { font-size:15px; }
+.observer-inspector .observer-work-lines { font-size:16px; }
+.observer-inspector .observer-work-lines > div { grid-template-columns:68px minmax(0,1fr); gap:12px; margin-top:14px; }
+.observer-inspector .observer-report-note { font-size:14px; margin-top:18px; }
+.observer-inspector-notice { color:#e8d2ae; background:#443725; border-radius:5px; padding:12px; }
+@media (max-width:900px) {
+ .observer-inspector { top:96px; right:390px; width:calc(100% - 404px); padding:16px; }
+ .observer-inspector .observer-work-lines > div { display:block; }
+ .observer-inspector .observer-work-lines dt { margin-bottom:4px; }
+}
+@media (max-width:760px) {
+ .observer-panel { width:100%; flex-basis:auto; }
+ .observer-inspector { position:fixed; top:auto; left:10px; right:10px; bottom:10px; width:auto; max-height:76dvh; padding:20px; border-radius:12px; }
+ .observer-inspector .observer-work-lines > div { display:grid; }
+ .observer-inspector h2 { font-size:22px; }
+}
+
+/* Command surface: the pixel room is the scene, the surrounding UI is a work tool. */
+.observer-workspace { flex-direction:column; background:#211f1b; }
+.office-command-bar { flex:0 0 76px; display:flex; align-items:center; justify-content:space-between; gap:20px; padding:0 26px; background:#26241f; color:#faf0df; border-bottom:1px solid #4c463b; font:15px/1.4 system-ui,sans-serif; z-index:32; }
+.office-command-bar * { font-family:system-ui,sans-serif; }
+.office-brand { display:flex; align-items:baseline; gap:18px; min-width:0; }
+.office-brand strong { white-space:nowrap; font-size:21px; letter-spacing:-.025em; }
+.office-brand > span { color:#c3b8a5; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:32ch; }
+.office-view-switcher { display:flex; flex-shrink:0; gap:4px; background:#1d1c18; border-radius:8px; padding:4px; }
+.office-view-switcher button { min-height:40px; padding:8px 18px; color:#d4c7b0; background:transparent; border:0; border-radius:5px; font:600 14px/1.4 system-ui,sans-serif; cursor:pointer; }
+.office-view-switcher button:hover { background:#3c372c; }
+.office-view-switcher button[aria-pressed='true'] { background:#d9bb81; color:#251e13; }
+.office-view-switcher button:focus-visible { outline:2px solid #f9d493; outline-offset:3px; }
+.office-command-body { position:relative; display:flex; flex:1 1 0; min-height:0; min-width:0; overflow:hidden; }
+.office-command-body .observer-office-region { min-height:0; flex:1 1 0; }
+.office-content-surface { flex:1 1 0; min-width:0; min-height:0; overflow:auto; background:#26231e; scrollbar-width:thin; scrollbar-color:#a48b68 #26231e; }
+.office-command-body .observer-panel { flex:0 0 350px; width:350px; background:#29271f; border-left-color:#4e473a; }
+.observer-panel-content { padding:25px 22px; }
+.observer-header h1 { font-size:23px; color:#f8ebd6; letter-spacing:-.02em; }
+.observer-guide { font-size:14px; line-height:1.6; color:#cfc2ac; margin-top:14px; }
+.observer-filter { margin:24px 0; }
+.observer-filter label { font-size:13px; font-weight:650; color:#cfc2ac; }
+.observer-project { margin-bottom:24px; }
+.observer-panel h2 { color:#eee1c9; font-size:16px; }
+.observer-agent-entry { background:transparent; }
+.observer-agent { background:#343027; padding:15px; border-radius:8px; }
+.observer-agent-title strong { font-size:15px; }
+.observer-focus-hint { font-size:12px; }
+.observer-agent-state { font-size:13px; margin-top:9px; }
+.observer-action { font-size:13px; }
+.observer-task-preview { color:#eee0c8; line-height:1.55; margin-top:9px; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+.observer-empty { font-size:14px; line-height:1.6; }
+.observer-more { margin-top:20px; }
+.observer-more > summary { font-size:15px; }
+.observer-history { margin-bottom:20px; font-size:15px; }
+.observer-room-nav { top:16px; left:16px; right:16px; }
+.observer-room-switcher { gap:6px; }
+.observer-room-nav button { background:#29271ff5; border-color:#71634e; border-radius:6px; min-height:42px; font-size:13px; }
+.observer-room-nav button[aria-pressed='true'] { background:#d9bb81; color:#251e13; border-color:#d9bb81; }
+.observer-room-controls { margin-top:3px; }
+.observer-room-controls > span { background:#29271ff0; }
+.observer-room-label { border-bottom-width:1px; border-radius:4px; background:#29271ff0; }
+.observer-character-label { background:#26241ff5; padding:8px 12px; max-width:230px; }
+.observer-character-label strong { font-size:13px; }
+.observer-inspector { top:92px; right:366px; width:min(450px,calc(100% - 388px)); }
+@media (max-width:1100px) and (min-width:761px) {
+ .office-command-body .observer-panel { flex-basis:310px; width:310px; }
+ .observer-panel-content { padding:22px 17px; }
+ .observer-inspector { right:324px; width:calc(100% - 342px); }
+ .office-brand > span { max-width:20ch; }
+}
+@media (max-width:760px) {
+ .office-command-bar { flex:0 0 auto; min-height:104px; padding:14px 16px; flex-wrap:wrap; gap:12px; }
+ .office-brand { width:100%; justify-content:space-between; gap:12px; }
+ .office-brand strong { font-size:18px; }
+ .office-brand > span { max-width:20ch; font-size:13px; }
+ .office-view-switcher { width:100%; }
+ .office-view-switcher button { flex:1; }
+ .office-command-body { flex-direction:column; }
+ .office-command-body .observer-panel { width:100%; flex:0 0 auto; max-height:45%; border-left:0; border-top:1px solid #4e473a; }
+ .office-command-body.office-content-mode .observer-panel { max-height:40%; }
+ .office-command-body.office-content-mode .observer-panel:not([open]) { flex-basis:auto; }
+ .observer-panel-toggle { font-size:16px; padding:12px 16px; }
+ .observer-toggle-hint { font-size:12px; }
+ .observer-header h1 { display:none; }
+ .observer-room-nav { top:8px; left:8px; right:8px; }
+ .observer-room-controls > span { font-size:11px; }
+ .observer-inspector { position:fixed; top:auto; left:10px; right:10px; bottom:10px; width:auto; max-height:76dvh; }
+}
+.observer-needs-help { padding:14px; background:#433721; border-radius:8px; }
+.observer-needs-help h2 { color:#f5d99d; }
+.observer-panel .observer-guide { font-size:14px; }
+.observer-panel .observer-agent-title strong { font-size:16px; }
+.observer-panel .observer-task-preview { font-size:14px; }
+.observer-panel .observer-agent-state { font-size:14px; }
+.observer-panel .observer-project h2 { font-size:17px; }

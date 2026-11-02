@@ -1,0 +1,6 @@
+interface:
+  display_name: "Сначала согласуем задачу"
+  short_description: "Уточнить запрос и согласовать результат до выполнения"
+  default_prompt: "Use $clarify-before-action to turn my request into a clear task brief, discuss key choices with me, and wait for my approval before execution."
+policy:
+  allow_implicit_invocation: true

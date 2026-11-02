@@ -1,0 +1,1468 @@
+# NOTE: pinned to 3.0.0 deliberately. @asyncapi/modelina v5.10.1 hardcodes
+# `supportedVersions: ['3.0.0']` in its AsyncAPIInputProcessor. Bumping to
+# 3.1.0 makes Modelina fall through to a generic JSON-schema parser that emits
+# only `export type Root = any` instead of our 52 named interfaces. Bump when
+# Modelina adds 3.1.0 support; the upgrade is `npx asyncapi convert` + a regen.
+# `npm run asyncapi:validate` will keep emitting an info note recommending 3.1.0;
+# that's expected and harmless until Modelina catches up.
+asyncapi: 3.0.0
+info:
+  title: Pixel Agents Protocol
+  version: 1.0.0
+  description: |
+    Bidirectional WebSocket protocol between the Pixel Agents server and any UI client
+    (the bundled VS Code webview, the standalone browser SPA, or future third-party
+    clients). The server watches AI-coding-agent transcripts, parses tool activity, 
+    owns office layout, and streams events to all connected clients. 
+    Clients send commands to launch agents, save layout, and toggle settings.
+
+    The protocol is provider-agnostic: a HookProvider implementation defines how raw
+    CLI events are normalized to the AgentEvent shape, which the server translates
+    into ServerMessage broadcasts.
+  license:
+    name: MIT
+  contact:
+    name: Pixel Agents
+    url: https://github.com/pablodelucca/pixel-agents
+
+servers:
+  local:
+    host: 127.0.0.1:3100
+    protocol: ws
+    description: Local Pixel Agents server (default port 3100)
+    pathname: /ws
+
+channels:
+  ws:
+    address: /ws
+    description: |
+      Single bidirectional channel. The server pushes ServerMessage events on agent
+      lifecycle, tool activity, asset loading, and settings. Clients send
+      ClientMessage commands.
+    messages:
+      ServerMessage:
+        $ref: '#/components/messages/ServerMessage'
+      ClientMessage:
+        $ref: '#/components/messages/ClientMessage'
+
+operations:
+  receiveServerMessage:
+    action: receive
+    channel:
+      $ref: '#/channels/ws'
+    messages:
+      - $ref: '#/channels/ws/messages/ServerMessage'
+  sendClientMessage:
+    action: send
+    channel:
+      $ref: '#/channels/ws'
+    messages:
+      - $ref: '#/channels/ws/messages/ClientMessage'
+
+components:
+  messages:
+    ServerMessage:
+      title: Server-to-client message
+      summary: Any message broadcast by the server to connected clients.
+      payload:
+        $ref: '#/components/schemas/ServerMessage'
+    ClientMessage:
+      title: Client-to-server message
+      summary: Any command sent by a client to the server.
+      payload:
+        $ref: '#/components/schemas/ClientMessage'
+
+  schemas:
+    # ── Top-level discriminated unions ────────────────────────────
+
+    ServerMessage:
+      oneOf:
+        # Provider capabilities
+        - $ref: '#/components/schemas/ProviderCapabilities'
+        # Agent lifecycle
+        - $ref: '#/components/schemas/AgentCreated'
+        - $ref: '#/components/schemas/AgentClosed'
+        - $ref: '#/components/schemas/AgentSelected'
+        - $ref: '#/components/schemas/ExistingAgents'
+        # Agent status / tool activity
+        - $ref: '#/components/schemas/AgentStatus'
+        - $ref: '#/components/schemas/AgentToolStart'
+        - $ref: '#/components/schemas/AgentToolDone'
+        - $ref: '#/components/schemas/AgentToolsClear'
+        - $ref: '#/components/schemas/AgentToolPermission'
+        - $ref: '#/components/schemas/AgentToolPermissionClear'
+        # Sub-agent activity
+        - $ref: '#/components/schemas/SubagentToolStart'
+        - $ref: '#/components/schemas/SubagentToolDone'
+        - $ref: '#/components/schemas/SubagentClear'
+        - $ref: '#/components/schemas/SubagentToolPermission'
+        # Agent Teams
+        - $ref: '#/components/schemas/AgentTeamInfo'
+        # Context window
+        - $ref: '#/components/schemas/AgentContextUsage'
+        # Layout
+        - $ref: '#/components/schemas/LayoutLoaded'
+        # Assets
+        - $ref: '#/components/schemas/FurnitureAssetsLoaded'
+        - $ref: '#/components/schemas/CharacterSpritesLoaded'
+        - $ref: '#/components/schemas/PetSpritesLoaded'
+        - $ref: '#/components/schemas/FloorTilesLoaded'
+        - $ref: '#/components/schemas/WallTilesLoaded'
+        - $ref: '#/components/schemas/CarpetTilesLoaded'
+        # Settings & config
+        - $ref: '#/components/schemas/OfficeAccess'
+        - $ref: '#/components/schemas/SettingsLoaded'
+        - $ref: '#/components/schemas/BypassPermissionsUpdated'
+        - $ref: '#/components/schemas/HooksStatus'
+        - $ref: '#/components/schemas/HooksConsentRequest'
+        - $ref: '#/components/schemas/ExternalAssetDirectoriesUpdated'
+        - $ref: '#/components/schemas/AreaMappingsLoaded'
+        - $ref: '#/components/schemas/DirectoriesLoaded'
+        - $ref: '#/components/schemas/DirectorySaved'
+        - $ref: '#/components/schemas/DirectoryRejected'
+        - $ref: '#/components/schemas/DirectorySuggestions'
+        # Terminal (standalone embedded terminal control plane)
+        - $ref: '#/components/schemas/TerminalAvailability'
+        - $ref: '#/components/schemas/TerminalSessionOpened'
+        - $ref: '#/components/schemas/TerminalSessionClosed'
+        # Diagnostics
+        - $ref: '#/components/schemas/AgentDiagnostics'
+      discriminator: type
+
+    ClientMessage:
+      oneOf:
+        - $ref: '#/components/schemas/WebviewReady'
+        - $ref: '#/components/schemas/LaunchAgent'
+        - $ref: '#/components/schemas/FocusAgent'
+        - $ref: '#/components/schemas/CloseAgent'
+        - $ref: '#/components/schemas/SaveAgentSeats'
+        - $ref: '#/components/schemas/SaveLayout'
+        - $ref: '#/components/schemas/SetSoundEnabled'
+        - $ref: '#/components/schemas/SetLastSeenVersion'
+        - $ref: '#/components/schemas/SetAlwaysShowLabels'
+        - $ref: '#/components/schemas/SetGhostHeadlessAgents'
+        - $ref: '#/components/schemas/SetHooksEnabled'
+        - $ref: '#/components/schemas/HooksConsentResponse'
+        - $ref: '#/components/schemas/SetHooksInfoShown'
+        - $ref: '#/components/schemas/SetWatchAllSessions'
+        - $ref: '#/components/schemas/ExportLayout'
+        - $ref: '#/components/schemas/ImportLayout'
+        - $ref: '#/components/schemas/OpenSessionsFolder'
+        - $ref: '#/components/schemas/AddExternalAssetDirectory'
+        - $ref: '#/components/schemas/RemoveExternalAssetDirectory'
+        - $ref: '#/components/schemas/SaveAreaMappings'
+        - $ref: '#/components/schemas/SetShowAreas'
+        - $ref: '#/components/schemas/SetBypassPermissions'
+        - $ref: '#/components/schemas/SetShowHostDirectories'
+        - $ref: '#/components/schemas/SaveDirectory'
+        - $ref: '#/components/schemas/RemoveDirectory'
+        - $ref: '#/components/schemas/RequestDirectorySuggestions'
+        - $ref: '#/components/schemas/RequestDiagnostics'
+      discriminator: type
+
+    # ── Server message variants ────────────────────────────────────
+
+    ProviderCapabilities:
+      description: |
+        Sent once after `webviewReady`, before any agent messages. Tells the client
+        which tool names should render with the "reading" animation and which spawn
+        sub-agent characters.
+      type: object
+      additionalProperties: false
+      required: [type, readingTools, subagentToolNames]
+      properties:
+        type:
+          const: providerCapabilities
+        readingTools:
+          type: array
+          items:
+            type: string
+          description: Tool names that should render the reading animation (vs typing).
+        subagentToolNames:
+          type: array
+          items:
+            type: string
+          description: Tool names that spawn sub-agent characters (e.g. Task, Agent).
+
+    AgentCreated:
+      description: A new agent has appeared in the office.
+      type: object
+      additionalProperties: false
+      required: [type, id]
+      properties:
+        type:
+          const: agentCreated
+        id:
+          type: integer
+        directoryName:
+          type: string
+        isExternal:
+          type: boolean
+        palette:
+          type: integer
+          description: Server-assigned character palette index.
+        hueShift:
+          type: integer
+          description: Server-assigned hue shift in degrees (0-360).
+
+    AgentClosed:
+      description: An agent has been removed from the office.
+      type: object
+      additionalProperties: false
+      required: [type, id]
+      properties:
+        type:
+          const: agentClosed
+        id:
+          type: integer
+
+    AgentSelected:
+      description: An agent's terminal was focused (VS Code only). UI should highlight it.
+      type: object
+      additionalProperties: false
+      required: [type, id]
+      properties:
+        type:
+          const: agentSelected
+        id:
+          type: integer
+
+    ExistingAgents:
+      description: |
+        Snapshot of all current agents. Sent on initial connect and after agent set
+        changes that the client missed. Includes seat/palette assignments.
+      type: object
+      additionalProperties: false
+      required: [type, agents, agentMeta, directoryNames, externalAgents]
+      properties:
+        type:
+          const: existingAgents
+        agents:
+          type: array
+          items:
+            type: integer
+        agentMeta:
+          type: object
+          description: Map of agent ID (string) to seat metadata.
+          additionalProperties:
+            $ref: '#/components/schemas/AgentSeatMeta'
+        directoryNames:
+          type: object
+          description: Map of agent ID (string) to Directory name.
+          additionalProperties:
+            type: string
+        externalAgents:
+          type: object
+          description: Map of agent ID (string) to external flag.
+          additionalProperties:
+            type: boolean
+
+    AgentStatus:
+      description: Active vs waiting state for an agent (drives character animation).
+      type: object
+      additionalProperties: false
+      required: [type, id, status]
+      properties:
+        type:
+          const: agentStatus
+        id:
+          type: integer
+        status:
+          $ref: '#/components/schemas/AgentActivityStatus'
+        awaitingInput:
+          type: boolean
+          description: >-
+            Only meaningful when status is "waiting". True when the agent went
+            idle waiting on the user (drives the "Waiting for input" label);
+            absent/false means the agent finished its turn ("Done").
+
+    AgentActivityStatus:
+      description: Activity state of an agent.
+      type: string
+      enum: [active, waiting]
+
+    AgentToolStart:
+      description: Agent began executing a tool.
+      type: object
+      additionalProperties: false
+      required: [type, id, toolId, status]
+      properties:
+        type:
+          const: agentToolStart
+        id:
+          type: integer
+        toolId:
+          type: string
+        status:
+          type: string
+          description: Human-readable status to display (e.g. "Reading foo.ts").
+        toolName:
+          type: string
+        permissionActive:
+          type: boolean
+        runInBackground:
+          type: boolean
+        isTeammateSpawn:
+          type: boolean
+          description: >-
+            True when this spawn tool call carries a name, making the spawn a
+            Teammate-to-be. The office must not create a Subtask sub-character
+            for it — a teammate character will represent the spawn instead.
+
+    AgentToolDone:
+      description: Agent finished executing a tool.
+      type: object
+      additionalProperties: false
+      required: [type, id, toolId]
+      properties:
+        type:
+          const: agentToolDone
+        id:
+          type: integer
+        toolId:
+          type: string
+
+    AgentToolsClear:
+      description: All foreground tools cleared (turn end). Background agents preserved.
+      type: object
+      additionalProperties: false
+      required: [type, id]
+      properties:
+        type:
+          const: agentToolsClear
+        id:
+          type: integer
+
+    AgentToolPermission:
+      description: Permission prompt detected for the agent's current tool.
+      type: object
+      additionalProperties: false
+      required: [type, id]
+      properties:
+        type:
+          const: agentToolPermission
+        id:
+          type: integer
+
+    AgentToolPermissionClear:
+      description: Permission prompt resolved.
+      type: object
+      additionalProperties: false
+      required: [type, id]
+      properties:
+        type:
+          const: agentToolPermissionClear
+        id:
+          type: integer
+
+    SubagentToolStart:
+      description: Sub-agent (e.g. Task) started a tool.
+      type: object
+      additionalProperties: false
+      required: [type, id, parentToolId, toolId, status]
+      properties:
+        type:
+          const: subagentToolStart
+        id:
+          type: integer
+        parentToolId:
+          type: string
+        toolId:
+          type: string
+        status:
+          type: string
+
+    SubagentToolDone:
+      description: Sub-agent finished a tool.
+      type: object
+      additionalProperties: false
+      required: [type, id, parentToolId, toolId]
+      properties:
+        type:
+          const: subagentToolDone
+        id:
+          type: integer
+        parentToolId:
+          type: string
+        toolId:
+          type: string
+
+    SubagentClear:
+      description: A sub-agent task completed.
+      type: object
+      additionalProperties: false
+      required: [type, id, parentToolId]
+      properties:
+        type:
+          const: subagentClear
+        id:
+          type: integer
+        parentToolId:
+          type: string
+
+    SubagentToolPermission:
+      description: Permission prompt for a sub-agent's tool.
+      type: object
+      additionalProperties: false
+      required: [type, id, parentToolId]
+      properties:
+        type:
+          const: subagentToolPermission
+        id:
+          type: integer
+        parentToolId:
+          type: string
+
+    AgentTeamInfo:
+      description: Agent Teams metadata (lead, teammate, tmux usage).
+      type: object
+      additionalProperties: false
+      required: [type, id]
+      properties:
+        type:
+          const: agentTeamInfo
+        id:
+          type: integer
+        teamName:
+          type: string
+        agentName:
+          type: string
+        isTeamLead:
+          type: boolean
+        leadAgentId:
+          type: integer
+        teamUsesTmux:
+          type: boolean
+
+    AgentContextUsage:
+      description: |
+        How much of the agent's context window is in use, as of its most recent
+        turn. A snapshot, NOT a running total: it falls when the session
+        compacts or clears. `maxContextTokens` is the runtime's best estimate of
+        the window size — transcripts don't state it, so it starts at the
+        default and widens (never shrinks) once a larger context is observed.
+        Sent for every agent, including leads and teammates; sub-agents have no
+        session of their own and never report it.
+      type: object
+      additionalProperties: false
+      required: [type, id, contextTokens, maxContextTokens]
+      properties:
+        type:
+          const: agentContextUsage
+        id:
+          type: integer
+        contextTokens:
+          type: integer
+        maxContextTokens:
+          type: integer
+
+    LayoutLoaded:
+      description: |
+        Office layout (tiles, furniture, colors). `null` when no layout file or
+        bundled default exists. `wasReset` is true when the bundled default
+        replaced an outdated user layout.
+      type: object
+      additionalProperties: false
+      required: [type, layout]
+      properties:
+        type:
+          const: layoutLoaded
+        layout:
+          oneOf:
+            - type: object
+              description: |
+                Opaque layout object (cols, rows, tiles, furniture, tileColors).
+                Format defined by the OfficeLayout schema in webview-ui; not
+                modeled here because it's owned by the rendering layer.
+            - type: 'null'
+        wasReset:
+          type: boolean
+
+    FurnitureAssetsLoaded:
+      description: Furniture catalog and sprite data, sent once after webviewReady.
+      type: object
+      additionalProperties: false
+      required: [type, catalog, sprites]
+      properties:
+        type:
+          const: furnitureAssetsLoaded
+        catalog:
+          type: array
+          items:
+            $ref: '#/components/schemas/FurnitureAssetMessage'
+        sprites:
+          type: object
+          description: Map of furniture asset ID to its sprite (2D hex string array).
+          additionalProperties:
+            type: array
+            items:
+              type: array
+              items:
+                type: string
+
+    CharacterSpritesLoaded:
+      description: Pre-colored character sprite sets (6 palettes), sent once at startup.
+      type: object
+      additionalProperties: false
+      required: [type, characters]
+      properties:
+        type:
+          const: characterSpritesLoaded
+        characters:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterSpriteSet'
+
+    PetSpritesLoaded:
+      description: Pet sprite frame sets and display names, sent once after webviewReady (between characterSpritesLoaded and floorTilesLoaded).
+      type: object
+      additionalProperties: false
+      required: [type, pets, petNames]
+      properties:
+        type:
+          const: petSpritesLoaded
+        pets:
+          type: array
+          description: One frame-set per loaded pet, indexed by petType.
+          items:
+            $ref: '#/components/schemas/PetSpriteFrameSet'
+        petNames:
+          type: array
+          description: Display names parallel-indexed to `pets` (sourced from each pet's manifest.json).
+          items:
+            type: string
+
+    PetSpriteFrameSet:
+      description: One pet's frames keyed by direction + state. All arrays are 3D hex-string arrays (frames × rows × pixels).
+      type: object
+      additionalProperties: false
+      required: [walkDown, idleDown, walkUp, idleUp, walkRight]
+      properties:
+        walkDown:
+          type: array
+          description: 3 frames at 16×32 pixels.
+          items:
+            type: array
+            items:
+              type: array
+              items:
+                type: string
+        idleDown:
+          type: array
+          description: 3 frames at 16×32 pixels.
+          items:
+            type: array
+            items:
+              type: array
+              items:
+                type: string
+        walkUp:
+          type: array
+          description: 3 frames at 16×32 pixels.
+          items:
+            type: array
+            items:
+              type: array
+              items:
+                type: string
+        idleUp:
+          type: array
+          description: 3 frames at 16×32 pixels.
+          items:
+            type: array
+            items:
+              type: array
+              items:
+                type: string
+        walkRight:
+          type: array
+          description: 3 frames at 32×32 pixels.
+          items:
+            type: array
+            items:
+              type: array
+              items:
+                type: string
+
+    FloorTilesLoaded:
+      description: Floor tile sprites (7 patterns).
+      type: object
+      additionalProperties: false
+      required: [type, sprites]
+      properties:
+        type:
+          const: floorTilesLoaded
+        sprites:
+          type: array
+          description: Array of 2D hex string arrays (one per pattern).
+          items:
+            type: array
+            items:
+              type: array
+              items:
+                type: string
+
+    WallTilesLoaded:
+      description: Wall auto-tile sprite sets (16 bitmask pieces).
+      type: object
+      additionalProperties: false
+      required: [type, sets]
+      properties:
+        type:
+          const: wallTilesLoaded
+        sets:
+          type: array
+          description: Array of wall tile sets; each set is an array of 2D hex string arrays.
+          items:
+            type: array
+            items:
+              type: array
+              items:
+                type: array
+                items:
+                  type: string
+
+    CarpetTilesLoaded:
+      description: Carpet auto-tile sprite sets (16 marching-squares pieces per variant).
+      type: object
+      additionalProperties: false
+      required: [type, sets]
+      properties:
+        type:
+          const: carpetTilesLoaded
+        sets:
+          type: array
+          description: Array of carpet variants; each variant is an array of 2D hex string arrays.
+          items:
+            type: array
+            items:
+              type: array
+              items:
+                type: array
+                items:
+                  type: string
+
+    SettingsLoaded:
+      description: All persisted user-level settings, sent once on connect.
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - soundEnabled
+        - lastSeenVersion
+        - extensionVersion
+        - watchAllSessions
+        - alwaysShowLabels
+        - ghostHeadlessAgents
+        - hooksEnabled
+        - hooksInfoShown
+        - externalAssetDirectories
+        - showAreas
+        - bypassPermissions
+        - showHostDirectories
+      properties:
+        type:
+          const: settingsLoaded
+        soundEnabled:
+          type: boolean
+        lastSeenVersion:
+          type: string
+        extensionVersion:
+          type: string
+        watchAllSessions:
+          type: boolean
+        alwaysShowLabels:
+          type: boolean
+        ghostHeadlessAgents:
+          type: boolean
+        hooksEnabled:
+          type: boolean
+        hooksInfoShown:
+          type: boolean
+        externalAssetDirectories:
+          type: array
+          items:
+            type: string
+        showAreas:
+          type: boolean
+        bypassPermissions:
+          type: boolean
+          description: >-
+            Persistent per-host permission posture. While true, every launch on
+            this host runs the CLI with its skip-permissions flag.
+        showHostDirectories:
+          type: boolean
+          description: >-
+            Persistent per-host choice whether the host's own Directories (VS
+            Code's workspace folders, standalone's start directory) are listed
+            in `directoriesLoaded`. Off by default.
+
+    BypassPermissionsUpdated:
+      description: |
+        The host's skip-permissions posture changed (an accepted
+        `setBypassPermissions`). Broadcast to every connected office, the one
+        that sent it included, so every Settings toggle shows the posture the
+        next launch will actually use. `enabled` is the persisted value read
+        back after the write, not an echo of the request.
+      type: object
+      additionalProperties: false
+      required: [type, enabled]
+      properties:
+        type:
+          const: bypassPermissionsUpdated
+        enabled:
+          type: boolean
+
+    HooksStatus:
+      description: |
+        Actual hook installation state, as opposed to the hooksEnabled
+        preference in SettingsLoaded. The two can disagree: hooksEnabled
+        defaults to true while first-run consent is still pending and nothing
+        is installed yet. Sent after the connect handshake and whenever the
+        install state changes (consent granted, settings toggle, uninstall).
+      type: object
+      additionalProperties: false
+      required: [type, providerId, installed]
+      properties:
+        type:
+          const: hooksStatus
+        providerId:
+          type: string
+          description: >-
+            The hook provider this install state is about (HookProvider.id,
+            e.g. "claude"). Consumers keyed on install state must never mix
+            one provider's status into another's — the Intro's install
+            verdict in particular reads only the provider it asked about.
+        installed:
+          type: boolean
+
+    HooksConsentRequest:
+      description: |
+        Ask this client to run the first-run hooks consent dialog. Sent during the
+        `webviewReady` handshake when the hooks preference is on, consent has not
+        been recorded, and nothing of ours is installed — and, in standalone, only
+        on privileged (tokened) connections, since an untokened spectator could not
+        act on it anyway (its `hooksConsentResponse` would be ignored).
+
+        Carries the provider being asked about and its disclosure copy so the
+        client renders the server's exact terms (the provider's
+        consentDisclosure(), shared with no client-side duplicate to drift).
+        The client answers with `hooksConsentResponse`, echoing the providerId;
+        dismissing the dialog sends nothing and the request fires again on the
+        next connect. One request per provider that needs an answer.
+      type: object
+      additionalProperties: false
+      required: [type, providerId, headline, disclosure]
+      properties:
+        type:
+          const: hooksConsentRequest
+        providerId:
+          type: string
+          description: >-
+            The hook provider whose install is being approved (HookProvider.id).
+            The client never originates this value — it echoes it back in its
+            `hooksConsentResponse`.
+        headline:
+          type: string
+          description: One-sentence summary of what is being approved.
+        disclosure:
+          type: string
+          description: |
+            Full disclosure body (what is written, what data moves, how to undo),
+            paragraphs separated by blank lines.
+
+    AreaMappingsLoaded:
+      description: |
+        Directory-to-Area mappings. Directory names map to one or more Area
+        labels; new agents from that Directory prefer seats inside those Areas.
+      type: object
+      additionalProperties: false
+      required: [type, mappings]
+      properties:
+        type:
+          const: areaMappingsLoaded
+        mappings:
+          type: object
+          description: Map of Directory name (string) to array of Area labels.
+          additionalProperties:
+            type: array
+            items:
+              type: string
+
+    ExternalAssetDirectoriesUpdated:
+      description: External asset directory list changed (after add/remove).
+      type: object
+      additionalProperties: false
+      required: [type, dirs]
+      properties:
+        type:
+          const: externalAssetDirectoriesUpdated
+        dirs:
+          type: array
+          items:
+            type: string
+
+    DirectoriesLoaded:
+      description: |
+        The Directories agents can be launched into: the union of the user-defined
+        entries (machine-wide, shared by every host) and the host's own native
+        context, contributed as `source: host` entries — VS Code its workspace
+        folders, standalone the directory the server was started from. Deduped by
+        path with the user-defined entry winning, and ordered alphabetically by
+        name.
+
+        Rebroadcast to every connected office after every Directory mutation
+        (`saveDirectory`, `removeDirectory`). A client learns its own delete
+        succeeded from this; a save is acked separately by `directorySaved`.
+      type: object
+      additionalProperties: false
+      required: [type, directories]
+      properties:
+        type:
+          const: directoriesLoaded
+        directories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Directory'
+
+    DirectorySaved:
+      description: |
+        A `saveDirectory` was accepted and persisted. Sent point-to-point to the
+        requesting client (never broadcast), right after the `directoriesLoaded`
+        rebroadcast. Carries the entry exactly as stored: the host resolves the
+        path (tilde expansion, absolute resolution) and names an unnamed entry
+        after the resolved basename, so `directory.name` can differ from
+        anything the client typed. Area mappings are keyed by Directory name,
+        so a client assigning Areas in the same save keys them by this name.
+      type: object
+      additionalProperties: false
+      required: [type, directory]
+      properties:
+        type:
+          const: directorySaved
+        directory:
+          $ref: '#/components/schemas/Directory'
+
+    DirectoryRejected:
+      description: |
+        A `saveDirectory` failed host-side validation, or a `saveDirectory` /
+        `removeDirectory` could not be written to the shared config. Sent
+        point-to-point to the requesting client (never broadcast) and nothing
+        changed on disk; the Directory modal stays open and shows `reason` inline.
+      type: object
+      additionalProperties: false
+      required: [type, path, reason]
+      properties:
+        type:
+          const: directoryRejected
+        path:
+          type: string
+          description: The path exactly as submitted, before tilde expansion.
+        reason:
+          type: string
+          description: Human-readable cause, shown inline in the Directory modal.
+
+    DirectorySuggestions:
+      description: |
+        Candidate paths for the Directory modal, recovered from the working
+        directories recorded in the coding agent's own session transcripts across
+        every session root — places the user has already run agents in, so adding
+        a Directory on a phone rarely means typing one out.
+
+        Sent point-to-point in reply to `requestDirectorySuggestions` (never
+        broadcast). Already deduped, existence-checked and stripped of anything
+        already in the Directory union, so the modal renders the list as-is; an
+        empty list means the modal shows no suggestions section.
+      type: object
+      additionalProperties: false
+      required: [type, paths]
+      properties:
+        type:
+          const: directorySuggestions
+        paths:
+          type: array
+          description: Absolute directory paths, ordered for stable display.
+          items:
+            type: string
+
+    AgentDiagnostics:
+      description: Connection diagnostics for all agents (response to requestDiagnostics).
+      type: object
+      additionalProperties: false
+      required: [type, agents]
+      properties:
+        type:
+          const: agentDiagnostics
+        agents:
+          type: array
+          description: Per-agent diagnostic info; shape opaque to the protocol.
+          items:
+            type: object
+
+    # ── Terminal control plane (standalone embedded terminal) ──────
+    # Only the CONTROL plane lives in this contract. The terminal's raw byte
+    # stream is deliberately outside it, on a dedicated WebSocket endpoint
+    # (GET /terminal/:agentId): it is unstructured, high-frequency data that
+    # would otherwise pass through this discriminated union and the store's
+    # broadcast fan-out (which would also leak one agent's output to every
+    # connected client). See docs/design/standalone-terminal.md.
+
+    OfficeAccess:
+      description: >-
+        Whether this connection may change anything. A read-only office (no
+        valid server token, or a Host outside the allowlist) can load and watch
+        the office but every change it sends is refused, so the client hides
+        the controls that would send one. Sent first on webviewReady; a client
+        that never receives it is not read-only.
+      type: object
+      additionalProperties: false
+      required: [type, readOnly]
+      properties:
+        type:
+          const: officeAccess
+        readOnly:
+          type: boolean
+
+    TerminalAvailability:
+      description: >-
+        Whether this server can host embedded terminals. Standalone only; the
+        VS Code surface owns its own terminals and never receives this. When
+        false, the client hides terminal UI and shows `reason`.
+      type: object
+      additionalProperties: false
+      required: [type, available]
+      properties:
+        type:
+          const: terminalAvailability
+        available:
+          type: boolean
+        reason:
+          type: string
+          description: Human-readable cause when unavailable (e.g. no PTY module installed).
+
+    TerminalSessionOpened:
+      description: >-
+        A PTY-backed terminal now exists for this agent; the client may attach to
+        GET /terminal/:agentId. Re-sent on webviewReady for every live session so
+        a reconnecting client rebuilds its tabs.
+      type: object
+      additionalProperties: false
+      required: [type, agentId]
+      properties:
+        type:
+          const: terminalSessionOpened
+        agentId:
+          type: integer
+
+    TerminalSessionClosed:
+      description: The agent's terminal process exited; its socket is no longer attachable.
+      type: object
+      additionalProperties: false
+      required: [type, agentId]
+      properties:
+        type:
+          const: terminalSessionClosed
+        agentId:
+          type: integer
+        exitCode:
+          type: integer
+
+    # ── Client message variants ────────────────────────────────────
+
+    WebviewReady:
+      description: Client signals it's ready to receive state.
+      type: object
+      additionalProperties: false
+      required: [type]
+      properties:
+        type:
+          const: webviewReady
+
+    LaunchAgent:
+      description: Launch a new Claude agent in a new terminal.
+      type: object
+      additionalProperties: false
+      required: [type]
+      properties:
+        type:
+          const: launchAgent
+        directoryPath:
+          type: string
+          description: Path of the Directory to launch into.
+
+    FocusAgent:
+      description: Focus an agent's terminal.
+      type: object
+      additionalProperties: false
+      required: [type, id]
+      properties:
+        type:
+          const: focusAgent
+        id:
+          type: integer
+
+    CloseAgent:
+      description: Close (dismiss) an agent.
+      type: object
+      additionalProperties: false
+      required: [type, id]
+      properties:
+        type:
+          const: closeAgent
+        id:
+          type: integer
+
+    SaveAgentSeats:
+      description: Persist seat assignments for current agents.
+      type: object
+      additionalProperties: false
+      required: [type, seats]
+      properties:
+        type:
+          const: saveAgentSeats
+        seats:
+          type: object
+          description: Map of agent ID (string) to seat assignment.
+          additionalProperties:
+            $ref: '#/components/schemas/SeatAssignment'
+
+    SaveLayout:
+      description: Save the office layout to ~/.pixel-agents/layout.json.
+      type: object
+      additionalProperties: false
+      required: [type, layout]
+      properties:
+        type:
+          const: saveLayout
+        layout:
+          type: object
+          description: Opaque layout object; format owned by the rendering layer.
+
+    SetSoundEnabled:
+      type: object
+      additionalProperties: false
+      required: [type, enabled]
+      properties:
+        type:
+          const: setSoundEnabled
+        enabled:
+          type: boolean
+
+    SetLastSeenVersion:
+      type: object
+      additionalProperties: false
+      required: [type, version]
+      properties:
+        type:
+          const: setLastSeenVersion
+        version:
+          type: string
+
+    SetAlwaysShowLabels:
+      type: object
+      additionalProperties: false
+      required: [type, enabled]
+      properties:
+        type:
+          const: setAlwaysShowLabels
+        enabled:
+          type: boolean
+
+    SetGhostHeadlessAgents:
+      description: >-
+        Toggle translucent rendering for headless agents (adopted sessions with no
+        terminal to focus).
+      type: object
+      additionalProperties: false
+      required: [type, enabled]
+      properties:
+        type:
+          const: setGhostHeadlessAgents
+        enabled:
+          type: boolean
+
+    SetHooksEnabled:
+      type: object
+      additionalProperties: false
+      required: [type, providerId, enabled]
+      properties:
+        type:
+          const: setHooksEnabled
+        providerId:
+          type: string
+          description: >-
+            The hook provider being toggled (HookProvider.id). The client
+            echoes the id of the hooksStatus row the checkbox renders; it
+            never originates one.
+        enabled:
+          type: boolean
+
+    HooksConsentResponse:
+      description: |
+        The user's answer to `hooksConsentRequest` — an ABSOLUTE statement of
+        the state the user wants, revisable from the Intro's closing step. Only
+        an exact `install` grants consent and installs; only an exact `never`
+        records a durable decline and persists hooks-off (uninstalling first
+        when this provider's hooks are on disk from an earlier answer).
+        `notNow` writes nothing on a fresh ask, but over anything an EARLIER
+        answer left behind it reverts it — uninstalling a landed install,
+        clearing a recorded grant or decline — so the ask genuinely returns on
+        the next connect. Any unrecognized value writes NOTHING and the user is
+        asked again — a malformed choice must never be read as approval, a
+        durable decline, or an uninstall trigger. The server ignores this
+        message on unprivileged standalone connections, which were never sent
+        the request.
+      type: object
+      additionalProperties: false
+      required: [type, providerId, choice]
+      properties:
+        type:
+          const: hooksConsentResponse
+        providerId:
+          type: string
+          description: >-
+            The provider this answer is about, echoed verbatim from the
+            `hooksConsentRequest` that solicited it. An id naming no
+            registered provider is treated exactly like a junk choice:
+            write nothing.
+        choice:
+          $ref: '#/components/schemas/HooksConsentChoice'
+
+    HooksConsentChoice:
+      description: >-
+        The three consent outcomes. Receivers must treat any other value as a
+        no-op: write nothing, ask again. (An exact notNow itself is a no-op
+        only on a fresh ask — over an earlier answer it is a revision that
+        undoes what that answer left behind.)
+      type: string
+      enum: [install, notNow, never]
+
+    SetHooksInfoShown:
+      type: object
+      additionalProperties: false
+      required: [type]
+      properties:
+        type:
+          const: setHooksInfoShown
+
+    SetWatchAllSessions:
+      type: object
+      additionalProperties: false
+      required: [type, enabled]
+      properties:
+        type:
+          const: setWatchAllSessions
+        enabled:
+          type: boolean
+
+    ExportLayout:
+      description: Trigger layout export via host-native save dialog.
+      type: object
+      additionalProperties: false
+      required: [type]
+      properties:
+        type:
+          const: exportLayout
+
+    ImportLayout:
+      description: Trigger layout import via host-native open dialog.
+      type: object
+      additionalProperties: false
+      required: [type]
+      properties:
+        type:
+          const: importLayout
+
+    OpenSessionsFolder:
+      description: Open ~/.claude/projects in the OS file manager.
+      type: object
+      additionalProperties: false
+      required: [type]
+      properties:
+        type:
+          const: openSessionsFolder
+
+    AddExternalAssetDirectory:
+      description: >-
+        Add an external asset directory. In VS Code the host shows a native
+        directory picker and omits `path`; the standalone browser has no native
+        picker, so it supplies an absolute `path` typed by the user.
+      type: object
+      additionalProperties: false
+      required: [type]
+      properties:
+        type:
+          const: addExternalAssetDirectory
+        path:
+          type: string
+          description: Absolute directory path (standalone browser only; omitted in VS Code).
+
+    RemoveExternalAssetDirectory:
+      description: Remove an external asset directory by path.
+      type: object
+      additionalProperties: false
+      required: [type, path]
+      properties:
+        type:
+          const: removeExternalAssetDirectory
+        path:
+          type: string
+
+    SaveAreaMappings:
+      description: Persist Directory-to-Area mappings for seat assignment.
+      type: object
+      additionalProperties: false
+      required: [type, mappings]
+      properties:
+        type:
+          const: saveAreaMappings
+        mappings:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+
+    SetBypassPermissions:
+      description: >-
+        Persist the host's skip-permissions posture. Applied host-side when
+        building the launch command; never sent per launch.
+      type: object
+      additionalProperties: false
+      required: [type, enabled]
+      properties:
+        type:
+          const: setBypassPermissions
+        enabled:
+          type: boolean
+
+    SetShowHostDirectories:
+      description: >-
+        Persist whether the host's own Directories are listed. Answered with a
+        `directoriesLoaded` broadcast of the list as it now stands. Hiding them
+        only changes the list: agents launched in a host Directory are still
+        named after it.
+      type: object
+      additionalProperties: false
+      required: [type, enabled]
+      properties:
+        type:
+          const: setShowHostDirectories
+        enabled:
+          type: boolean
+
+    SaveDirectory:
+      description: |
+        Add or edit a user-defined Directory. `previousPath` identifies the entry
+        being edited; absent means this is a new one.
+
+        The host expands a leading `~`, then requires the path to exist and to be
+        a directory. On success it rebroadcasts `directoriesLoaded`; on failure it
+        replies `directoryRejected` and persists nothing.
+      type: object
+      additionalProperties: false
+      required: [type, name, path]
+      properties:
+        type:
+          const: saveDirectory
+        name:
+          type: string
+          description: Display name. Empty falls back to the path's basename.
+        path:
+          type: string
+          description: Filesystem path; a leading `~` is expanded host-side.
+        previousPath:
+          type: string
+          description: Path of the entry being edited. Absent when adding.
+
+    RemoveDirectory:
+      description: >-
+        Delete a user-defined Directory. Agents already running in it are left
+        untouched.
+      type: object
+      additionalProperties: false
+      required: [type, path]
+      properties:
+        type:
+          const: removeDirectory
+        path:
+          type: string
+
+    RequestDirectorySuggestions:
+      description: >-
+        Ask the host for tappable path suggestions for the Directory modal; it
+        replies `directorySuggestions` to this client only. Sent when the modal
+        opens, so the list reflects the sessions on disk right then.
+      type: object
+      additionalProperties: false
+      required: [type]
+      properties:
+        type:
+          const: requestDirectorySuggestions
+
+    SetShowAreas:
+      description: Toggle the Areas overlay (translucent rendering on top of the office).
+      type: object
+      additionalProperties: false
+      required: [type, enabled]
+      properties:
+        type:
+          const: setShowAreas
+        enabled:
+          type: boolean
+
+    RequestDiagnostics:
+      description: Request agent connection diagnostics (server responds with agentDiagnostics).
+      type: object
+      additionalProperties: false
+      required: [type]
+      properties:
+        type:
+          const: requestDiagnostics
+
+    # ── Supporting schemas ─────────────────────────────────────────
+
+    AgentSeatMeta:
+      description: |
+        Seat metadata associated with an agent (palette index, hue shift, seat ID).
+        Used in `existingAgents.agentMeta`. All fields optional because some agents
+        may not have a seat assignment yet.
+      type: object
+      additionalProperties: false
+      properties:
+        palette:
+          type: integer
+        hueShift:
+          type: integer
+        seatId:
+          type: string
+
+    SeatAssignment:
+      description: |
+        Required seat assignment payload sent in `saveAgentSeats`. `seatId` may be
+        null when the agent is unseated (left their chair). All other fields required.
+      type: object
+      additionalProperties: false
+      required: [palette, hueShift, seatId]
+      properties:
+        palette:
+          type: integer
+        hueShift:
+          type: integer
+        seatId:
+          type: [string, 'null']
+
+    Directory:
+      description: |
+        A named filesystem location agents can be launched into. `source` marks
+        where the entry came from: `host` entries are contributed by the host
+        (VS Code's workspace folders, standalone's start directory) and are
+        read-only in the office; `user` entries are defined by the user.
+      type: object
+      additionalProperties: false
+      required: [name, path, source]
+      properties:
+        name:
+          type: string
+        path:
+          type: string
+        source:
+          $ref: '#/components/schemas/DirectorySource'
+
+    DirectorySource:
+      description: |
+        Where a Directory came from. `host` entries are contributed by the host
+        and are read-only in the office; `user` entries are defined by the user.
+      type: string
+      enum: [user, host]
+
+    CharacterSpriteSet:
+      description: |
+        One palette's character sprites as 3D hex-string arrays (frames × rows × pixels).
+        Three direction sets per palette: down, up, right (left is rendered as flipped right).
+      type: object
+      additionalProperties: false
+      required: [down, up, right]
+      properties:
+        down:
+          type: array
+          items:
+            type: array
+            items:
+              type: array
+              items:
+                type: string
+        up:
+          type: array
+          items:
+            type: array
+            items:
+              type: array
+              items:
+                type: string
+        right:
+          type: array
+          items:
+            type: array
+            items:
+              type: array
+              items:
+                type: string
+
+    FurnitureAssetMessage:
+      description: One entry in the furniture catalog (sent in `furnitureAssetsLoaded`).
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - label
+        - category
+        - file
+        - width
+        - height
+        - footprintW
+        - footprintH
+        - isDesk
+        - canPlaceOnWalls
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        label:
+          type: string
+        category:
+          type: string
+        file:
+          type: string
+        width:
+          type: integer
+        height:
+          type: integer
+        footprintW:
+          type: integer
+        footprintH:
+          type: integer
+        isDesk:
+          type: boolean
+        canPlaceOnWalls:
+          type: boolean
+        groupId:
+          type: string
+        canPlaceOnSurfaces:
+          type: boolean
+        backgroundTiles:
+          type: integer
+        orientation:
+          type: string
+        state:
+          type: string
+        mirrorSide:
+          type: boolean
+        rotationScheme:
+          type: string
+        animationGroup:
+          type: string
+        frame:
+          type: integer

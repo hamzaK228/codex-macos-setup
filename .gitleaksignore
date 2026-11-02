@@ -1,0 +1,6 @@
+# Exact upstream documentation examples and deliberately fake log-redaction fixture.
+payload/skills/testing-api-security-with-owasp-top-10/UPSTREAM.md:curl-auth-user:60
+payload/skills/testing-api-security-with-owasp-top-10/UPSTREAM.md:curl-auth-user:100
+payload/skills/testing-for-broken-access-control/UPSTREAM.md:curl-auth-header:238
+payload/skills/testing-jwt-token-security/UPSTREAM.md:jwt:59
+vendor/pixel-agents/server/__tests__/httpServerLog.test.ts:generic-api-key:26
